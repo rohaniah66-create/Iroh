@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MPI Mengenal Iklan - Bahasa Indonesia Kelas 8</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Nunito',system-ui,sans-serif;background:linear-gradient(160deg,#0b3d91,#1e6fd9 55%,#5ab0ff);min-height:100vh;color:#0f2a5c}
+h1,h2,h3,.fd{font-family:'Baloo 2','Nunito',sans-serif}
+.btn{background:#1d4ed8;color:#fff;font-weight:800;border-radius:14px;padding:.7rem 1.2rem;box-shadow:0 4px 0 #1e3a8a;transition:transform .15s,background .15s;cursor:pointer}
+.btn:hover{background:#2563eb;transform:translateY(-2px)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #1e3a8a}
+.btn.alt{background:#fff;color:#1d4ed8;box-shadow:0 4px 0 #93c5fd}
+.btn.alt:hover{background:#eff6ff}
+.btn.sel{background:#f59e0b;color:#fff;box-shadow:0 4px 0 #b45309}
+.btn.ok{background:#16a34a;box-shadow:0 4px 0 #166534}
+.btn.no{background:#dc2626;box-shadow:0 4px 0 #7f1d1d}
+.btn:disabled{opacity:.55;cursor:default;transform:none}
+.card{background:#fff;border-radius:20px;padding:1.25rem;box-shadow:0 10px 30px rgba(8,30,90,.25)}
+.pop{animation:pop .7s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes pop{from{opacity:0;transform:scale(.4) translateY(40px)}to{opacity:1;transform:none}}
+@keyframes fl{50%{transform:translateY(-12px)}}
+.fl{animation:fl 2.4s ease-in-out infinite;display:inline-block}
+.blank{display:inline-block;min-width:110px;border-bottom:3px dashed #1d4ed8;text-align:center;font-weight:800;color:#1d4ed8;padding:0 6px;cursor:pointer}
+.chip{background:#dbeafe;color:#1e3a8a;border-radius:10px;padding:.4rem .8rem;font-weight:800;cursor:grab;display:inline-block;margin:3px;user-select:none}
+.chip.sel{background:#f59e0b;color:#fff}
+.w{display:inline-block;padding:2px 6px;margin:2px;border-radius:8px;cursor:pointer;user-select:none;font-weight:600}
+.w.m{background:#fde047}.w.good{background:#86efac}.w.bad{background:#fca5a5}
+@media print{body{background:#fff}.noprint{display:none!important}}
+@media(prefers-reduced-motion:reduce){.pop,.fl{animation:none}}
+</style>
+</head>
+<body>
+<button id="home" class="btn alt noprint fixed top-3 left-3 z-40 hidden" onclick="sfx.click();menu()">🏠 HOME</button>
+<button id="gear" class="btn alt noprint fixed top-3 right-3 z-40 hidden" onclick="sfx.click();$('#set').classList.toggle('hidden')">⚙️</button>
+<div id="set" class="card hidden fixed top-16 right-3 z-40 w-64 noprint">
+  <h3 class="font-extrabold text-lg mb-2">Pengaturan</h3>
+  <button id="mbtn" class="btn w-full mb-3" onclick="toggleMusic()">🎵 Musik: ON</button>
+  <label class="font-bold text-sm">Volume <span id="vl">50</span>%</label>
+  <input id="vol" type="range" min="0" max="100" value="50" class="w-full" oninput="setVol(this.value)">
+</div>
+<main id="app" class="max-w-3xl mx-auto px-4 pt-16 pb-10"></main>
+<footer class="text-center text-white/90 text-sm pb-4 noprint">Pengembang: Ronaniah, S.Pd. &bull; Tahun 2026</footer>
+
+<script>
+/* ====== KONFIGURASI: tempel URL Web App Google Apps Script (lihat petunjuk) ====== */
+const SHEET_URL='';
+/* ================================================================================= */
+const $=s=>document.querySelector(s);
+const shuf=a=>[...a].sort(()=>Math.random()-.5);
+const set=h=>{$('#app').innerHTML=h;scrollTo(0,0)};
+
+/* ---------- AUDIO (disintesis, tanpa file eksternal) ---------- */
+let AC,master,musicOn=true,vol=.5,mt,st=0;
+function initAudio(){if(AC)return;AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=vol;master.connect(AC.destination);startMusic()}
+function tone(f,d=.12,ty='sine',g=.3,w=0){if(!AC)return;const o=AC.createOscillator(),e=AC.createGain(),t=AC.currentTime+w;o.type=ty;o.frequency.value=f;e.gain.setValueAtTime(g,t);e.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(e);e.connect(master);o.start(t);o.stop(t+d)}
+const sfx={click:()=>tone(660,.08,'square',.12),ok:()=>{tone(523,.12,'triangle',.3);tone(784,.2,'triangle',.3,.1)},no:()=>tone(170,.28,'sawtooth',.15),win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.25,'triangle',.3,i*.12))};
+const mel=[523,659,784,659,587,698,880,698,523,659,784,1047,880,784,659,587];
+function startMusic(){clearInterval(mt);if(!musicOn||!AC)return;mt=setInterval(()=>{const f=mel[st%16];tone(f,.25,'triangle',.07);if(st%4==0)tone(f/2,.45,'sine',.09);st++},260)}
+function toggleMusic(){musicOn=!musicOn;$('#mbtn').textContent='🎵 Musik: '+(musicOn?'ON':'OFF');musicOn?startMusic():clearInterval(mt);sfx.click()}
+function setVol(v){vol=v/100;$('#vl').textContent=v;if(master)master.gain.value=vol}
+
+/* ---------- SPLASH & MENU ---------- */
+function splash(){
+ $('#home').classList.add('hidden');$('#gear').classList.add('hidden');
+ set(`<section class="text-center text-white pt-10">
+ <div class="text-6xl fl">📢</div>
+ <h2 class="pop text-xl font-bold mt-2" style="animation-delay:.1s">Media Pembelajaran Interaktif &bull; Bahasa Indonesia &bull; Kelas 8 SMP</h2>
+ <h1 class="pop font-extrabold leading-none my-4" style="font-size:clamp(3.2rem,15vw,7rem);animation-delay:.3s;text-shadow:0 6px 0 #0b3d91">MENGENAL<br>IKLAN</h1>
+ <p class="pop text-lg mb-8" style="animation-delay:.6s">Pahami teks iklan komersial dan fungsinya!</p>
+ <button class="btn alt pop text-2xl px-10 py-4" style="animation-delay:.9s" onclick="initAudio();sfx.click();menu()">▶ MULAI</button></section>`)}
+function menu(){
+ $('#home').classList.remove('hidden');$('#gear').classList.remove('hidden');$('#set').classList.add('hidden');
+ const b=(i,t,f)=>`<button class="btn text-xl py-6 w-full" onclick="sfx.click();${f}()"><span class="text-4xl block">${i}</span>${t}</button>`;
+ set(`<h2 class="text-white text-3xl font-extrabold text-center mb-5">Menu Utama</h2>
+ <div class="grid grid-cols-2 gap-4">${b('🏠','BERANDA','beranda')}${b('📖','MATERI','materi')}${b('✍️','SIMULASI','simulasi')}${b('🎮','KUIS','kuis')}</div>`)}
+function beranda(){set(`<div class="card"><h2 class="text-2xl font-extrabold">Selamat Datang! 👋</h2>
+ <p class="mt-2">Media ini membantumu belajar tentang <b>iklan komersial</b>.</p>
+ <h3 class="font-bold mt-3">Tujuan Pembelajaran</h3>
+ <p>Siswa dapat memahami teks iklan komersial dan fungsinya.</p>
+ <h3 class="font-bold mt-3">Cara Belajar</h3>
+ <ol class="list-decimal ml-5"><li>Baca <b>MATERI</b> sampai selesai.</li><li>Bermain <b>KUIS</b> untuk berlatih.</li><li>Kerjakan <b>SIMULASI</b> (10 soal) dan dapatkan sertifikat.</li></ol>
+ <p class="mt-3 text-sm text-slate-600">Pengembang: Ronaniah, S.Pd. &bull; 2026</p></div>`)}
+
+/* ---------- MATERI ---------- */
+const TABS=['Pengertian','Ciri-ciri','Fungsi','Contoh'];
+let tab=0;
+function materi(t=0){tab=t;
+ const bar=TABS.map((n,i)=>`<button class="btn ${i==t?'':'alt'}" onclick="sfx.click();materi(${i})">${n}</button>`).join('');
+ let c='';
+ if(t==0)c=`<h2 class="text-2xl font-extrabold">Apa itu Iklan Komersial?</h2><p class="mt-2">Iklan komersial adalah pesan yang disampaikan untuk <b>menawarkan barang atau jasa</b> kepada masyarakat agar tertarik dan membelinya.</p><p class="mt-2">Iklan dapat berupa teks di koran, poster, brosur, media sosial, atau tayangan televisi. Tujuannya mencari keuntungan, karena itu disebut <i>komersial</i>.</p>`;
+ if(t==1){const L=[['Persuasif','Bahasanya membujuk dan mengajak pembaca membeli.'],['Singkat dan padat','Kalimat pendek, mudah dibaca dan diingat.'],['Kreatif','Memakai permainan kata, rima, atau slogan menarik.'],['Informatif','Memuat nama produk, kelebihan, harga, dan alamat/kontak.'],['Bersifat melebih-lebihkan wajar','Menonjolkan keunggulan produk agar menarik perhatian.']];
+  c=`<h2 class="text-2xl font-extrabold mb-2">Ciri-ciri Teks Iklan</h2><p class="text-sm mb-2">Klik tiap kartu untuk membuka penjelasan.</p>`+L.map(([a,b])=>reveal(a,b)).join('')}
+ if(t==2){const L=[['1. Memberi informasi','Menjelaskan nama, kegunaan, harga, dan kelebihan produk.'],['2. Membujuk (persuasi)','Mengajak dan memengaruhi konsumen agar membeli.'],['3. Mengingatkan','Menjaga konsumen tetap ingat pada produk, misalnya lewat tayangan berulang.'],['4. Membangun citra','Membentuk kesan baik dan kepercayaan terhadap merek.'],['5. Meningkatkan penjualan','Menarik perhatian sehingga lebih banyak orang membeli.']];
+  c=`<h2 class="text-2xl font-extrabold mb-2">Fungsi Iklan Komersial</h2><p class="text-sm mb-2">Klik tiap kartu untuk membuka penjelasan.</p>`+L.map(([a,b])=>reveal(a,b)).join('')}
+ if(t==3)c=`<h2 class="text-2xl font-extrabold mb-2">Contoh Teks Iklan</h2><p class="text-sm mb-3">Klik tiap bagian untuk mengetahui namanya.</p>
+  ${part('Segar Setiap Teguk, Sehat Setiap Hari!','Slogan: kalimat singkat yang mudah diingat.')}
+  ${part('Jus Jeruk SEGARIN dibuat dari 100% jeruk pilihan, tanpa pengawet, kaya vitamin C. Hanya Rp5.000 per botol.','Isi: informasi produk, kelebihan, dan harga.')}
+  ${part('Beli sekarang di warung terdekat atau hubungi 0812-0000-1111!','Penutup: ajakan membeli dan kontak.')}`;
+ set(`<div class="flex flex-wrap gap-2 mb-4 justify-center">${bar}</div><div class="card">${c}</div>
+ <div class="flex justify-between mt-4"><button class="btn alt" ${t==0?'disabled':''} onclick="sfx.click();materi(${t-1})">◀ Sebelumnya</button><button class="btn alt" ${t==3?'disabled':''} onclick="sfx.click();materi(${t+1})">Berikutnya ▶</button></div>`)}
+const reveal=(a,b)=>`<div class="mb-2"><button class="btn w-full text-left" onclick="sfx.click();this.nextElementSibling.classList.toggle('hidden')">${a}</button><p class="hidden bg-blue-50 rounded-xl p-3 mt-1">${b}</p></div>`;
+const part=(a,b)=>`<div class="mb-3"><button class="btn alt w-full text-left" onclick="sfx.click();this.nextElementSibling.classList.toggle('hidden')">${a}</button><p class="hidden bg-amber-100 rounded-xl p-3 mt-1 font-bold">${b}</p></div>`;
+
+/* ---------- KUIS (4 game x 3 level) ---------- */
+const F=['Memberi informasi','Membujuk','Mengingatkan','Membangun citra'];
+const G={
+ tebak:{n:'Tebak Fungsi',e:'🎯',t:'mc',L:[
+  [['Iklan menyebutkan harga, ukuran, dan bahan sebuah tas.',F,0],['"Ayo beli sekarang, diskon 50%!" berfungsi untuk ...',F,1],['Iklan sabun tampil berulang di TV agar kita tidak lupa.',F,2]],
+  [['Iklan bank menonjolkan kesan aman dan tepercaya.',F,3],['"Jangan sampai kehabisan, pesan sekarang!" berfungsi ...',F,1],['Poster menjelaskan cara pakai dan manfaat vitamin.',F,0]],
+  [['Perusahaan memasang iklan layanan setiap hari agar namanya tetap diingat.',F,2],['Kalimat "Pilihan terbaik keluarga Indonesia" paling berfungsi ...',F,3],['Brosur ponsel memuat spesifikasi kamera dan baterai.',F,0]]]},
+ bs:{n:'Benar atau Salah',e:'✅',t:'mc',L:[
+  [['Iklan komersial bertujuan menawarkan barang atau jasa.',['Benar','Salah'],0],['Iklan tidak boleh memuat nama produk.',['Benar','Salah'],1],['Bahasa iklan bersifat persuasif.',['Benar','Salah'],0]],
+  [['Slogan adalah kalimat singkat yang mudah diingat.',['Benar','Salah'],0],['Iklan hanya ada di televisi.',['Benar','Salah'],1],['Mengingatkan konsumen termasuk fungsi iklan.',['Benar','Salah'],0]],
+  [['Iklan yang baik wajib memakai kalimat panjang dan rumit.',['Benar','Salah'],1],['Kontak penjual sering ada di bagian penutup iklan.',['Benar','Salah'],0],['Tujuan iklan komersial adalah memberi hukuman kepada pembeli.',['Benar','Salah'],1]]]},
+ pasang:{n:'Pasangkan',e:'🔗',t:'match',L:[
+  [['Harga Rp10.000, berat 250 gram','Memberi informasi'],['Ayo, miliki sekarang!','Membujuk'],['Selalu ada untukmu setiap hari','Mengingatkan']],
+  [['Tersedia dalam tiga warna','Memberi informasi'],['Jangan lewatkan promo ini!','Membujuk'],['Ingat, mandi pakai Segar!','Mengingatkan'],['Dipercaya sejak 1990','Membangun citra']],
+  [['Terbuat dari bahan alami','Memberi informasi'],['Beli dua gratis satu, sekarang juga!','Membujuk'],['Jangan lupa, minum susu tiap pagi','Mengingatkan'],['Merek nomor satu pilihan keluarga','Membangun citra'],['Buka setiap hari pukul 08.00-20.00','Memberi informasi']]]},
+ susun:{n:'Susun Kalimat',e:'🧩',t:'order',L:[
+  [['Beli sekarang juga'],['Iklan menawarkan produk'],['Slogan harus singkat']],
+  [['Iklan berfungsi membujuk konsumen'],['Gunakan bahasa yang menarik'],['Hubungi kami hari ini']],
+  [['Iklan komersial bertujuan menawarkan barang atau jasa'],['Teks iklan memuat nama produk dan kelebihannya'],['Bahasa iklan yang persuasif membuat orang tertarik membeli']]]}
+};
+let unl={tebak:1,bs:1,pasang:1,susun:1},S={};
+function kuis(){set(`<h2 class="text-white text-3xl font-extrabold text-center mb-4">Pilih Game</h2><div class="grid grid-cols-2 gap-4">`+Object.keys(G).map(k=>`<button class="btn text-lg py-5" onclick="sfx.click();levels('${k}')"><span class="text-4xl block">${G[k].e}</span>${G[k].n}</button>`).join('')+`</div>`)}
+function levels(g){set(`<div class="card text-center"><h2 class="text-2xl font-extrabold">${G[g].e} ${G[g].n}</h2><p class="mb-3">Selesaikan level untuk membuka level berikutnya.</p><div class="flex gap-3 justify-center flex-wrap">`+G[g].L.map((_,i)=>`<button class="btn ${i<unl[g]?'':'no'}" ${i<unl[g]?'':'disabled'} onclick="sfx.click();play('${g}',${i})">${i<unl[g]?'Level '+(i+1):'🔒 Level '+(i+1)}</button>`).join('')+`</div><button class="btn alt mt-4" onclick="sfx.click();kuis()">◀ Kembali</button></div>`)}
+function play(g,l){S={g,l,i:0,sc:0,wrong:0,done:{}};G[g].t=='mc'?qMC():G[g].t=='match'?qMatch():qOrder()}
+const head=()=>`<div class="text-white font-bold mb-2">${G[S.g].n} &bull; Level ${S.l+1} &bull; Skor: ${S.sc}</div>`;
+function qMC(){const [q,o,a]=G[S.g].L[S.l][S.i];S.opts=o.map((t,i)=>({t,c:i==a}));if(S.g=='tebak')S.opts=shuf(S.opts);
+ set(head()+`<div class="card"><p class="text-sm">Soal ${S.i+1} dari 3</p><h3 class="text-xl font-bold my-3">${q}</h3><div class="grid gap-2">`+S.opts.map((x,i)=>`<button class="btn alt text-left" onclick="ansMC(${i},this)">${x.t}</button>`).join('')+`</div></div>`)}
+function ansMC(i,b){const bs=[...document.querySelectorAll('#app .grid button')];bs.forEach(x=>x.disabled=true);
+ const ok=S.opts[i].c;ok?(S.sc++,sfx.ok()):sfx.no();b.classList.remove('alt');b.classList.add(ok?'ok':'no');
+ if(!ok)bs[S.opts.findIndex(x=>x.c)].classList.add('ok');
+ setTimeout(()=>{S.i++;S.i<3?qMC():fin(S.sc,3)},1000)}
+function qMatch(){const P=G[S.g].L[S.l];S.sel=null;S.R=S.R&&S.R.l==S.l?S.R:{l:S.l,r:shuf(P.map(x=>x[1]))};
+ set(head()+`<div class="card"><p class="text-sm mb-2">Pilih kalimat iklan di kiri, lalu pilih fungsinya di kanan.</p><div class="grid grid-cols-2 gap-3"><div class="grid gap-2">`+P.map((x,i)=>`<button class="btn alt text-left ${S.done[i]?'ok':''}" ${S.done[i]?'disabled':''} onclick="pickL(${i})">${x[0]}</button>`).join('')+`</div><div class="grid gap-2 content-start">`+S.R.r.map((t,j)=>{const d=Object.entries(S.done).some(([i,v])=>v&&P[i][1]==t&&S.used&&S.used[j]);return `<button class="btn ${S.used&&S.used[j]?'ok':''}" ${S.used&&S.used[j]?'disabled':''} onclick="pickR(${j})">${t}</button>`}).join('')+`</div></div></div>`)}
+function pickL(i){sfx.click();S.sel=i;[...document.querySelectorAll('#app .grid .grid:first-child button')].forEach((b,k)=>b.classList.toggle('sel',k==i))}
+function pickR(j){if(S.sel==null)return;const P=G[S.g].L[S.l];S.used=S.used||{};
+ if(P[S.sel][1]==S.R.r[j]){sfx.ok();S.done[S.sel]=1;S.used[j]=1;S.sc++;S.sel=null;if(Object.keys(S.done).length==P.length){S.R=null;S.used=null;return fin(Math.max(0,P.length-S.wrong),P.length)}}
+ else{sfx.no();S.wrong++;S.sel=null}
+ qMatch()}
+function qOrder(){const s=G[S.g].L[S.l][S.i][0].split(' ');S.ans=[];S.pool=shuf(s.map((w,i)=>({w,i})));if(S.pool.map(x=>x.w).join(' ')==s.join(' '))S.pool.reverse();S.fail=0;drawOrder()}
+function drawOrder(msg=''){set(head()+`<div class="card"><p class="text-sm">Kalimat ${S.i+1} dari 3 &bull; Klik kata untuk menyusun kalimat.</p>
+ <div class="min-h-[64px] bg-blue-50 rounded-xl p-2 my-3 border-2 border-dashed border-blue-400">`+S.ans.map((x,k)=>`<span class="chip" onclick="sfx.click();S.pool.push(S.ans.splice(${k},1)[0]);drawOrder()">${x.w}</span>`).join('')+`</div><div>`+S.pool.map((x,k)=>`<span class="chip" onclick="sfx.click();S.ans.push(S.pool.splice(${k},1)[0]);drawOrder()">${x.w}</span>`).join('')+`</div><p class="font-bold text-red-600 h-6 mt-2">${msg}</p><button class="btn" onclick="chkOrder()">Periksa</button></div>`)}
+function chkOrder(){const t=G[S.g].L[S.l][S.i][0];if(S.ans.map(x=>x.w).join(' ')==t&&!S.pool.length){sfx.ok();if(!S.fail)S.sc++;S.i++;S.i<3?qOrder():fin(S.sc,3)}else{sfx.no();S.fail=1;drawOrder('Belum tepat, coba lagi!')}}
+function fin(sc,n){const pass=sc>=Math.ceil(n*.6),st=sc==n?3:pass?2:1;if(pass){sfx.win();unl[S.g]=Math.max(unl[S.g],Math.min(3,S.l+2))}
+ set(`<div class="card text-center"><div class="text-5xl">${'⭐'.repeat(st)}</div><h2 class="text-2xl font-extrabold mt-2">${pass?'Hebat! Level selesai':'Ayo coba lagi!'}</h2><p class="my-2">Skor: ${sc} dari ${n}</p><div class="flex gap-2 justify-center flex-wrap"><button class="btn" onclick="sfx.click();play('${S.g}',${S.l})">Ulangi</button>${pass&&S.l<2?`<button class="btn ok" onclick="sfx.click();play('${S.g}',${S.l+1})">Level Berikutnya ▶</button>`:''}<button class="btn alt" onclick="sfx.click();levels('${S.g}')">Pilih Level</button></div></div>`)}
+
+/* ---------- SIMULASI (10 soal) ---------- */
+const Q=[
+ {t:'drag',q:'Iklan komersial dibuat untuk ___ produk kepada masyarakat.',o:['menawarkan','melarang','menghapus'],a:'menawarkan'},
+ {t:'drag',q:'Bahasa iklan dibuat ___ agar konsumen tertarik membeli.',o:['persuasif','kaku','rumit'],a:'persuasif'},
+ {t:'drag',q:'Kalimat singkat yang mudah diingat dalam iklan disebut ___.',o:['slogan','berita','dongeng'],a:'slogan'},
+ {t:'drag',q:'Iklan yang tayang berulang kali berfungsi untuk ___ konsumen.',o:['mengingatkan','menakuti','melupakan'],a:'mengingatkan'},
+ {t:'mc',q:'Apa tujuan utama iklan komersial?',o:['Menghibur penonton saja','Menawarkan produk agar laku','Memberi tugas kepada siswa','Menyampaikan berita duka'],a:1},
+ {t:'mc',q:'Kalimat iklan yang berfungsi membujuk adalah ...',o:['Berat bersih 200 gram.','Dibuat di Bandung tahun 2020.','Ayo coba sekarang, rasakan bedanya!','Tersedia dalam botol kaca.'],a:2},
+ {t:'mc',q:'Ciri teks iklan yang benar adalah ...',o:['Panjang dan bertele-tele','Singkat, menarik, dan persuasif','Tanpa nama produk','Hanya berisi angka'],a:1},
+ {t:'mark',q:'Tandai 2 kata yang menunjukkan informasi harga.',s:'Dapatkan diskon 30% khusus hari ini!',a:['diskon','30%']},
+ {t:'mark',q:'Tandai 2 kata yang merupakan nama produk.',s:'Minum Susu Ceria, tulang kuat setiap hari!',a:['Susu','Ceria']},
+ {t:'mark',q:'Tandai 2 kata ajakan membeli.',s:'Ayo, beli sekarang sebelum kehabisan!',a:['Ayo','beli']}];
+let nama='',qi=0,skor=0,pick=null,mk=new Set(),slot=null,locked=false;
+function simulasi(){set(`<div class="card text-center"><h2 class="text-2xl font-extrabold">✍️ Simulasi</h2><p class="my-2">10 soal: Drag the Word, Pilihan Ganda, dan Mark the Word.</p>
+ <label class="font-bold block text-left" for="nm">Nama siswa</label>
+ <input id="nm" type="text" maxlength="40" autocomplete="off" placeholder="Ketik namamu di sini" class="w-full border-2 border-blue-400 rounded-xl p-3 text-lg my-2 outline-none focus:border-blue-700">
+ <p id="er" class="text-red-600 font-bold h-6"></p><button class="btn" onclick="startSim()">Mulai Simulasi</button></div>`);setTimeout(()=>$('#nm').focus(),50)}
+function startSim(){const v=$('#nm').value.trim();if(v.length<2){$('#er').textContent='Isi namamu dulu ya.';sfx.no();return}nama=v;qi=0;skor=0;sfx.click();qSim()}
+function qSim(){const x=Q[qi];slot=null;pick=null;mk=new Set();locked=false;let body='';
+ const hd=`<div class="text-white font-bold mb-2">Soal ${qi+1} dari 10 &bull; ${nama}</div>`;
+ if(x.t=='drag'){body=`<p class="text-sm mb-2">Seret kata ke tempat kosong (atau klik kata, lalu klik tempat kosong).</p><p class="text-xl font-bold my-3" id="ds">${x.q.replace('___','<span id="bl" class="blank" ondragover="event.preventDefault()" ondrop="dropW(event)" onclick="putW()">&nbsp;</span>')}</p><div>`+shuf(x.o).map(w=>`<span class="chip" draggable="true" ondragstart="event.dataTransfer.setData('text',this.textContent)" onclick="selW(this)">${w}</span>`).join('')+`</div>`}
+ if(x.t=='mc')body=`<h3 class="text-xl font-bold my-3">${x.q}</h3><div class="grid gap-2">`+x.o.map((o,i)=>`<button class="btn alt text-left" onclick="selMC(${i},this)">${o}</button>`).join('')+`</div>`;
+ if(x.t=='mark')body=`<p class="font-bold mb-2">${x.q}</p><p class="text-xl bg-blue-50 rounded-xl p-3" id="mk">`+x.s.split(' ').map((w,i)=>`<span class="w" data-i="${i}" onclick="mark(${i},this)">${w}</span>`).join(' ')+`</p>`;
+ set(hd+`<div class="card">${body}<p id="fb" class="font-bold h-7 mt-2"></p><button id="nx" class="btn" onclick="cek()">Periksa</button></div>`)}
+const clean=w=>w.replace(/[,.!?]$/,'');
+function selW(el){sfx.click();pick=el.textContent;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel',c==el))}
+function putW(){if(pick&&!locked){$('#bl').textContent=pick;slot=pick;sfx.click()}}
+function dropW(e){e.preventDefault();if(locked)return;slot=e.dataTransfer.getData('text');$('#bl').textContent=slot;sfx.click()}
+function selMC(i,b){if(locked)return;sfx.click();pick=i;document.querySelectorAll('#app .grid button').forEach(x=>{x.classList.add('alt');x.classList.remove('sel')});b.classList.remove('alt');b.classList.add('sel')}
+function mark(i,el){if(locked)return;sfx.click();mk.has(i)?mk.delete(i):mk.add(i);el.classList.toggle('m')}
+function cek(){const x=Q[qi];
+ if(locked){qi++;return qi<10?qSim():selesai()}
+ let ok=false;
+ if(x.t=='drag'){if(!slot)return;ok=slot==x.a;$('#bl').style.color=ok?'#16a34a':'#dc2626'}
+ if(x.t=='mc'){if(pick===null)return;ok=pick==x.a}
+ if(x.t=='mark'){if(!mk.size)return;const ws=x.s.split(' ');const sel=[...mk].map(i=>clean(ws[i]));ok=sel.length==x.a.length&&x.a.every(a=>sel.includes(a));
+  document.querySelectorAll('.w').forEach(e=>{const w=clean(ws[e.dataset.i]),m=mk.has(+e.dataset.i),c=x.a.includes(w);e.classList.remove('m');if(m&&c)e.classList.add('good');else if(m)e.classList.add('bad');else if(c)e.style.outline='3px dashed #16a34a'})}
+ locked=true;ok?(skor+=10,sfx.ok()):sfx.no();
+ const jw=x.t=='drag'?x.a:x.t=='mc'?x.o[x.a]:x.a.join(', ');
+ $('#fb').innerHTML=ok?'<span class="text-green-600">Benar! +10</span>':`<span class="text-red-600">Kurang tepat. Jawaban: ${jw}</span>`;
+ $('#nx').textContent=qi<9?'Soal berikutnya ▶':'Lihat hasil'}
+function kirim(d){try{const a=JSON.parse(localStorage.getItem('mpi_nilai')||'[]');a.push(d);localStorage.setItem('mpi_nilai',JSON.stringify(a))}catch(e){}
+ if(SHEET_URL){try{fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(d)})}catch(e){}}}
+function selesai(){sfx.win();const tgl=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+ kirim({nama,nilai:skor,tanggal:tgl,mapel:'Bahasa Indonesia',materi:'Mengenal Iklan'});
+ set(`<div class="card text-center" style="border:8px double #1d4ed8"><p class="fd text-lg">🏅 SERTIFIKAT PENCAPAIAN</p><p class="mt-3">Diberikan kepada</p>
+ <h1 class="fd font-extrabold text-blue-700 my-2 break-words" style="font-size:clamp(2rem,8vw,3.2rem)">${nama.replace(/</g,'&lt;')}</h1>
+ <p>telah menyelesaikan simulasi <b>Mengenal Iklan</b><br>(Bahasa Indonesia, Kelas 8 SMP)</p>
+ <p class="fd font-extrabold text-5xl my-3">Nilai: ${skor}</p><p>${skor>=80?'Sangat Baik! 🌟':skor>=60?'Baik 👍':'Terus berlatih ya 💪'}</p>
+ <p class="text-sm mt-3">${tgl}</p><p class="text-sm font-bold">Pengembang: Ronaniah, S.Pd. &bull; 2026</p></div>
+ <div class="flex gap-2 justify-center mt-4 noprint"><button class="btn alt" onclick="print()">🖨️ Cetak</button><button class="btn" onclick="sfx.click();simulasi()">Ulangi</button></div>`)}
+
+splash();
+</script>
+</body>
+</html>
